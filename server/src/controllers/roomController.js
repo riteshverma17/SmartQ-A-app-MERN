@@ -1,6 +1,6 @@
-const { request } = require("express");
 const Rooms = require("../models/Rooms");
 const Questions = require("../models/Questions");
+const { callGemini } = require("../services/geminiService");
 
 const roomController = {
     createRoom: async (request, response) => {
@@ -49,6 +49,9 @@ const roomController = {
                 user: user
             });
 
+            const io = request.app.get("io");
+            io.to(roomCode).emit("new-question", question);
+
             response.json(question);
         } catch (error) {
             console.log(error);
@@ -65,6 +68,21 @@ const roomController = {
                 .sort({ createdAt: -1 });
             
             response.json(questions);
+        } catch (error) {
+            console.log(error);
+            response.status(500).json({ message: 'Internal server error' });
+        }
+    },
+
+    summarizeQuestions: async (request, response) => {
+        try {
+            const { code } = request.params;
+
+            const questions = await Questions.find({ roomCode: code });
+            if (questions.length === 0) return response.json([]);
+
+            const summary = await callGemini(questions);
+            response.json(summary);
         } catch (error) {
             console.log(error);
             response.status(500).json({ message: 'Internal server error' });

@@ -6,5 +6,6 @@ router.post('/', roomController.createRoom);
 router.get('/:code', roomController.getByRoomId);
 router.post('/:code/question', roomController.createQuestion);
 router.get('/:code/question', roomController.getQuestions);
+router.get('/:code/summary', roomController.summarizeQuestions);
 
 module.exports = router;
